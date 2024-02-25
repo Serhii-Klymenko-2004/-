@@ -1,0 +1,43 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# URL датасету
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+
+# Завантаження датасету у DataFrame
+df = pd.read_csv(url)
+
+# Визначення розміру датасету (кількість рядків та колонок)
+dataset_shape = df.shape
+print("Розмір датасету:", dataset_shape)
+
+# Перевірка наявності пропущених даних
+missing_data = df.isnull().sum().any()
+if missing_data:
+    print("У датасеті є пропущені дані.")
+else:
+    print("У датасеті немає пропущених даних.")
+
+# Обрахунок статистичних параметрів для кожної колонки
+statistics = df.describe()
+print("Статистичні параметри для кожної колонки:")
+print(statistics)
+
+# Визначення кількості стовпців у датасеті
+num_columns = len(df.columns)
+
+# Отримання всіх значень у вигляді одновимірного масиву
+values = df.values.flatten()
+
+# Побудова гістограми для всього датасету
+plt.hist(values, bins=20, alpha=0.5)
+plt.title("Гістограма розподілу значень у всьому датасеті")
+plt.xlabel("Значення")
+plt.ylabel("Частота")
+plt.grid(True)
+plt.show()
+
+# Побудова гістограми для всього датасету по стовбцям
+df.hist(figsize=(12, 8))
+plt.tight_layout()  # автоматично розмістить підписи, щоб вони не накладались
+plt.show()
