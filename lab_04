@@ -1,0 +1,578 @@
+Завдання 1 -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+import sys
+sys.setrecursionlimit(3000)  
+
+class TreeNode:
+    def __init__(self, key):
+        self.left = None
+        self.right = None
+        self.val = key
+
+def insert(root, key):
+    if root is None:
+        return TreeNode(key)
+    else:
+        if root.val < key:
+            root.right = insert(root.right, key)
+        else:
+            root.left = insert(root.left, key)
+    return root
+
+def create_and_insert(n, element_type):
+    import time
+    import tracemalloc
+    import random
+    
+    if element_type == int:
+        elements = list(range(1, n))
+        new_element = n
+    elif element_type == float:
+        elements = [float(i) for i in range(1, n)]
+        new_element = float(n)
+    
+    root = None
+    for elem in elements:
+        root = insert(root, elem)
+    
+    # Вимірювання часу та пам'яті для вставки останнього елемента
+    tracemalloc.start()
+    start_time = time.time()
+    
+    root = insert(root, new_element)
+    
+    end_time = time.time()
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    
+    return end_time - start_time, peak
+
+import matplotlib.pyplot as plt
+
+sizes = [50, 100, 500, 1000, 2000]
+data_types = [int, float]
+
+results = {int: [], float: []}
+
+for data_type in data_types:
+    for size in sizes:
+        time_taken, memory_used = create_and_insert(size, data_type)
+        results[data_type].append((time_taken, memory_used))
+
+def plot_results(results, sizes, data_type):
+    times = [result[0] for result in results[data_type]]
+    memories = [result[1] for result in results[data_type]]
+    
+    plt.figure(figsize=(14, 6))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(sizes, times, marker='o')
+    plt.title(f'Час виконання для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Час (секунди)')
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(sizes, memories, marker='o')
+    plt.title(f'Використання пам\'яті для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Пам\'ять (байти)')
+    
+    plt.tight_layout()
+    plt.show()
+
+plot_results(results, sizes, int)
+plot_results(results, sizes, float)
+
+
+Завдання 2 -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+import time
+import tracemalloc
+import matplotlib.pyplot as plt
+
+import sys
+sys.setrecursionlimit(3000)  # або більше, якщо потрібно
+
+# Далі код залишається без змін
+
+class TreeNode:
+    def __init__(self, key):
+        self.left = None
+        self.right = None
+        self.val = key
+
+def insert_iterative(root, key):
+    new_node = TreeNode(key)
+    if root is None:
+        return new_node
+    
+    current = root
+    parent = None
+    
+    while current is not None:
+        parent = current
+        if key < current.val:
+            current = current.left
+        else:
+            current = current.right
+    
+    if key < parent.val:
+        parent.left = new_node
+    else:
+        parent.right = new_node
+    
+    return root
+
+def delete_node(root, key):
+    if root is None:
+        return root
+
+    if key < root.val:
+        root.left = delete_node(root.left, key)
+    elif key > root.val:
+        root.right = delete_node(root.right, key)
+    else:
+        if root.left is None:
+            return root.right
+        elif root.right is None:
+            return root.left
+
+        temp = min_value_node(root.right)
+        root.val = temp.val
+        root.right = delete_node(root.right, temp.val)
+    
+    return root
+
+def min_value_node(node):
+    current = node
+    while current.left is not None:
+        current = current.left
+    return current
+
+def create_and_insert_delete(n, element_type):
+    if element_type == int:
+        elements = list(range(1, n))
+        new_element = n
+    elif element_type == float:
+        elements = [float(i) for i in range(1, n)]
+        new_element = float(n)
+    
+    root = None
+    for elem in elements:
+        root = insert_iterative(root, elem)
+    
+    # Вимірювання часу та пам'яті для вставки останнього елемента
+    tracemalloc.start()
+    start_time = time.time()
+    
+    root = insert_iterative(root, new_element)
+    
+    end_time = time.time()
+    insert_time = end_time - start_time
+    insert_memory = tracemalloc.get_traced_memory()[1]
+    
+    # Вимірювання часу та пам'яті для видалення останнього елемента
+    start_time = time.time()
+    
+    root = delete_node(root, new_element)
+    
+    end_time = time.time()
+    delete_time = end_time - start_time
+    delete_memory = tracemalloc.get_traced_memory()[1]
+    
+    tracemalloc.stop()
+    
+    return insert_time, insert_memory, delete_time, delete_memory
+
+sizes = [50, 100, 500, 1000, 2000]
+data_types = [int, float]
+
+results = {int: [], float: []}
+
+for data_type in data_types:
+    for size in sizes:
+        insert_time, insert_memory, delete_time, delete_memory = create_and_insert_delete(size, data_type)
+        results[data_type].append((insert_time, insert_memory, delete_time, delete_memory))
+
+def plot_results(results, sizes, data_type):
+    insert_times = [result[0] for result in results[data_type]]
+    insert_memories = [result[1] for result in results[data_type]]
+    delete_times = [result[2] for result in results[data_type]]
+    delete_memories = [result[3] for result in results[data_type]]
+    
+    plt.figure(figsize=(14, 6))
+
+    plt.subplot(2, 2, 1)
+    plt.plot(sizes, insert_times, marker='o')
+    plt.title(f'Час вставки для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Час (секунди)')
+    
+    plt.subplot(2, 2, 2)
+    plt.plot(sizes, insert_memories, marker='o')
+    plt.title(f'Використання пам\'яті для вставки {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Пам\'ять (байти)')
+    
+    plt.subplot(2, 2, 3)
+    plt.plot(sizes, delete_times, marker='o')
+    plt.title(f'Час видалення для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Час (секунди)')
+    
+    plt.subplot(2, 2, 4)
+    plt.plot(sizes, delete_memories, marker='o')
+    plt.title(f'Використання пам\'яті для видалення {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Пам\'ять (байти)')
+    
+    plt.tight_layout()
+    plt.show()
+
+plot_results(results, sizes, int)
+plot_results(results, sizes, float)
+
+Завдання 3 -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+class BTreeNode:
+    def __init__(self, t, leaf=False):
+        self.t = t  # мінімальний ступінь (t-1 <= кількість ключів <= 2t-1)
+        self.leaf = leaf  # True якщо вузол є листом
+        self.keys = []  # список ключів вузла
+        self.children = []  # список дочірніх вузлів
+
+class BTree:
+    def __init__(self, t):
+        self.root = BTreeNode(t, True)
+        self.t = t
+
+    def insert(self, k):
+        root = self.root
+        if len(root.keys) == 2 * self.t - 1:
+            temp = BTreeNode(self.t)
+            self.root = temp
+            temp.children.append(root)
+            self.split_child(temp, 0)
+            self.insert_non_full(temp, k)
+        else:
+            self.insert_non_full(root, k)
+
+    def insert_non_full(self, x, k):
+        i = len(x.keys) - 1
+        if x.leaf:
+            x.keys.append((None, None))
+            while i >= 0 and k < x.keys[i]:
+                x.keys[i + 1] = x.keys[i]
+                i -= 1
+            x.keys[i + 1] = k
+        else:
+            while i >= 0 and k < x.keys[i]:
+                i -= 1
+            i += 1
+            if len(x.children[i].keys) == 2 * self.t - 1:
+                self.split_child(x, i)
+                if k > x.keys[i]:
+                    i += 1
+            self.insert_non_full(x.children[i], k)
+
+    def split_child(self, x, i):
+        t = self.t
+        y = x.children[i]
+        z = BTreeNode(t, y.leaf)
+        x.children.insert(i + 1, z)
+        x.keys.insert(i, y.keys[t - 1])
+        z.keys = y.keys[t:(2 * t - 1)]
+        y.keys = y.keys[0:(t - 1)]
+        if not y.leaf:
+            z.children = y.children[t:(2 * t)]
+            y.children = y.children[0:t]
+
+def create_and_insert_b_tree(n, element_type, t):
+    import time
+    import tracemalloc
+
+    if element_type == int:
+        elements = list(range(1, n))
+        new_element = n
+    elif element_type == float:
+        elements = [float(i) for i in range(1, n)]
+        new_element = float(n)
+
+    b_tree = BTree(t)
+
+    for elem in elements:
+        b_tree.insert(elem)
+
+    # Вимірювання часу та пам'яті для вставки останнього елемента
+    tracemalloc.start()
+    start_time = time.time()
+
+    b_tree.insert(new_element)
+
+    end_time = time.time()
+    insert_time = end_time - start_time
+    insert_memory = tracemalloc.get_traced_memory()[1]
+
+    tracemalloc.stop()
+
+    return insert_time, insert_memory
+
+import matplotlib.pyplot as plt
+
+sizes = [50, 100, 500, 1000, 2000]
+data_types = [int, float]
+t = 3  # мінімальний ступінь B-дерева
+
+results = {int: [], float: []}
+
+for data_type in data_types:
+    for size in sizes:
+        insert_time, insert_memory = create_and_insert_b_tree(size, data_type, t)
+        results[data_type].append((insert_time, insert_memory))
+
+def plot_results(results, sizes, data_type):
+    insert_times = [result[0] for result in results[data_type]]
+    insert_memories = [result[1] for result in results[data_type]]
+
+    plt.figure(figsize=(14, 6))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(sizes, insert_times, marker='o')
+    plt.title(f'Час вставки для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Час (секунди)')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(sizes, insert_memories, marker='o')
+    plt.title(f'Використання пам\'яті для вставки {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Пам\'ять (байти)')
+
+    plt.tight_layout()
+    plt.show()
+
+plot_results(results, sizes, int)
+plot_results(results, sizes, float)
+
+
+Завдання 4 -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+class BTreeNode:
+    def __init__(self, t, leaf=False):
+        self.t = t
+        self.leaf = leaf
+        self.keys = []
+        self.children = []
+
+class BTree:
+    def __init__(self, t):
+        self.root = BTreeNode(t, True)
+        self.t = t
+
+    def insert(self, k):
+        root = self.root
+        if len(root.keys) == 2 * self.t - 1:
+            temp = BTreeNode(self.t)
+            self.root = temp
+            temp.children.append(root)
+            self.split_child(temp, 0)
+            self.insert_non_full(temp, k)
+        else:
+            self.insert_non_full(root, k)
+
+    def insert_non_full(self, x, k):
+        i = len(x.keys) - 1
+        if x.leaf:
+            x.keys.append((None, None))
+            while i >= 0 and k < x.keys[i]:
+                x.keys[i + 1] = x.keys[i]
+                i -= 1
+            x.keys[i + 1] = k
+        else:
+            while i >= 0 and k < x.keys[i]:
+                i -= 1
+            i += 1
+            if len(x.children[i].keys) == 2 * self.t - 1:
+                self.split_child(x, i)
+                if k > x.keys[i]:
+                    i += 1
+            self.insert_non_full(x.children[i], k)
+
+    def split_child(self, x, i):
+        t = self.t
+        y = x.children[i]
+        z = BTreeNode(t, y.leaf)
+        x.children.insert(i + 1, z)
+        x.keys.insert(i, y.keys[t - 1])
+        z.keys = y.keys[t:(2 * t - 1)]
+        y.keys = y.keys[0:(t - 1)]
+        if not y.leaf:
+            z.children = y.children[t:(2 * t)]
+            y.children = y.children[0:t]
+
+    def delete(self, k):
+        self._delete(self.root, k)
+
+    def _delete(self, node, k):
+        t = self.t
+        i = 0
+        while i < len(node.keys) and k > node.keys[i]:
+            i += 1
+
+        if i < len(node.keys) and k == node.keys[i]:
+            if node.leaf:
+                node.keys.pop(i)
+            else:
+                if len(node.children[i].keys) >= t:
+                    predecessor = self._get_predecessor(node, i)
+                    node.keys[i] = predecessor
+                    self._delete(node.children[i], predecessor)
+                elif len(node.children[i + 1].keys) >= t:
+                    successor = self._get_successor(node, i)
+                    node.keys[i] = successor
+                    self._delete(node.children[i + 1], successor)
+                else:
+                    self._merge(node, i)
+                    self._delete(node.children[i], k)
+        elif not node.leaf:
+            if len(node.children[i].keys) < t:
+                if i != 0 and len(node.children[i - 1].keys) >= t:
+                    self._borrow_from_prev(node, i)
+                elif i != len(node.keys) and len(node.children[i + 1].keys) >= t:
+                    self._borrow_from_next(node, i)
+                else:
+                    if i != len(node.keys):
+                        self._merge(node, i)
+                    else:
+                        self._merge(node, i - 1)
+            if i < len(node.children) and len(node.children[i].keys) == t - 1:
+                self._delete(node.children[i], k)
+
+    def _get_predecessor(self, node, idx):
+        current = node.children[idx]
+        while not current.leaf:
+            current = current.children[-1]
+        return current.keys[-1]
+
+    def _get_successor(self, node, idx):
+        current = node.children[idx + 1]
+        while not current.leaf:
+            current = current.children[0]
+        return current.keys[0]
+
+    def _borrow_from_prev(self, node, idx):
+        child = node.children[idx]
+        sibling = node.children[idx - 1]
+        child.keys.insert(0, node.keys[idx - 1])
+        if not child.leaf:
+            child.children.insert(0, sibling.children.pop())
+        node.keys[idx - 1] = sibling.keys.pop()
+
+    def _borrow_from_next(self, node, idx):
+        child = node.children[idx]
+        sibling = node.children[idx + 1]
+        child.keys.append(node.keys[idx])
+        if not child.leaf:
+            child.children.append(sibling.children.pop(0))
+        node.keys[idx] = sibling.keys.pop(0)
+
+    def _merge(self, node, idx):
+        child = node.children[idx]
+        sibling = node.children[idx + 1]
+        child.keys.append(node.keys.pop(idx))
+        child.keys.extend(sibling.keys)
+        if not child.leaf:
+            child.children.extend(sibling.children)
+        node.children.pop(idx + 1)
+
+def create_insert_delete_b_tree(n, element_type, t):
+    import time
+    import tracemalloc
+
+    if element_type == int:
+        elements = list(range(1, n))
+        new_element = n
+    elif element_type == float:
+        elements = [float(i) for i in range(1, n)]
+        new_element = float(n)
+
+    b_tree = BTree(t)
+
+    for elem in elements:
+        b_tree.insert(elem)
+
+    # Вимірювання часу та пам'яті для вставки останнього елемента
+    tracemalloc.start()
+    start_time = time.time()
+
+    b_tree.insert(new_element)
+
+    end_time = time.time()
+    insert_time = end_time - start_time
+    insert_memory = tracemalloc.get_traced_memory()[1]
+
+    # Вимірювання часу та пам'яті для видалення останнього елемента
+    start_time = time.time()
+
+    b_tree.delete(new_element)
+
+    end_time = time.time()
+    delete_time = end_time - start_time
+    delete_memory = tracemalloc.get_traced_memory()[1]
+
+    tracemalloc.stop()
+
+    return insert_time, insert_memory, delete_time, delete_memory
+
+import matplotlib.pyplot as plt
+
+sizes = [50, 100, 500, 1000, 2000]
+data_types = [int, float]
+t = 3  # Мінімальний ступінь B-дерева
+
+results = {int: [], float: []}
+
+for data_type in data_types:
+    for size in sizes:
+        insert_time, insert_memory, delete_time, delete_memory = create_insert_delete_b_tree(size, data_type, t)
+        results[data_type].append((insert_time, insert_memory, delete_time, delete_memory))
+
+def plot_results(results, sizes, data_type):
+    insert_times = [result[0] for result in results[data_type]]
+    insert_memories = [result[1] for result in results[data_type]]
+    delete_times = [result[2] for result in results[data_type]]
+    delete_memories = [result[3] for result in results[data_type]]
+
+    plt.figure(figsize=(14, 6))
+
+    plt.subplot(2, 2, 1)
+    plt.plot(sizes, insert_times, marker='o')
+    plt.title(f'Час вставки для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Час (секунди)')
+
+    plt.subplot(2, 2, 2)
+    plt.plot(sizes, insert_memories, marker='o')
+    plt.title(f'Використання пам\'яті для вставки {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Пам\'ять (байти)')
+
+    plt.subplot(2, 2, 3)
+    plt.plot(sizes, delete_times, marker='o')
+    plt.title(f'Час видалення для типу {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Час (секунди)')
+
+    plt.subplot(2, 2, 4)
+    plt.plot(sizes, delete_memories, marker='o')
+    plt.title(f'Використання пам\'яті для видалення {data_type.__name__}')
+    plt.xlabel('Розмір масиву')
+    plt.ylabel('Пам\'ять (байти)')
+
+    plt.tight_layout()
+    plt.show()
+
+plot_results(results, sizes, int)
+plot_results(results, sizes, float)
+
+
