@@ -1,0 +1,70 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import streamlit as st
+import plotly.express as px
+
+# Завантаження датасету
+df = pd.read_csv('heart.csv')
+
+# Перегляд перших рядків датафрейму для перевірки стовпців
+print(df.head())
+print(df.columns)
+
+# Перетворення категорійних змінних на числові
+mappings = {
+    'sex': {'Male': 1, 'Female': 0},
+    'cp': {'typical angina': 0, 'atypical angina': 1, 'non-anginal': 2, 'asymptomatic': 3},
+    'fbs': {True: 1, False: 0},
+    'restecg': {'normal': 0, 'st-t abnormality': 1, 'lv hypertrophy': 2},
+    'exang': {True: 1, False: 0},
+    'slope': {'upsloping': 0, 'flat': 1, 'downsloping': 2},
+    'thal': {'normal': 1, 'fixed defect': 2, 'reversable defect': 3}
+}
+
+for column, mapping in mappings.items():
+    if column in df.columns:
+        df[column] = df[column].map(mapping)
+
+# Перевірка на пропущені значення та видалення рядків з пропущеними значеннями
+print(df.isnull().sum())
+df = df.dropna()
+
+# Перевірка типів даних
+print(df.dtypes)
+
+# Виключення нечислових стовпців перед обчисленням кореляційної матриці
+numeric_df = df.select_dtypes(include=[float, int])
+
+# Побудова кореляційної матриці
+corr_matrix = numeric_df.corr()
+plt.figure(figsize=(12, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+plt.show()
+
+# Виконання PCA
+features = numeric_df.drop('num', axis=1)  # Заміна 'target' на 'num'
+target = numeric_df['num']
+
+# Стандартизація даних
+features = StandardScaler().fit_transform(features)
+
+# PCA
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(features)
+principalDf = pd.DataFrame(data=principalComponents, columns=['principal component 1', 'principal component 2'])
+finalDf = pd.concat([principalDf, target], axis=1)
+
+# Створення дашборду за допомогою Streamlit
+st.title('Heart Disease Data Analysis')
+
+# Графік PCA
+fig = px.scatter(finalDf, x='principal component 1', y='principal component 2', color='num')
+st.plotly_chart(fig)
+
+# Інші візуалізації (додатково)
+# ...
+
+
